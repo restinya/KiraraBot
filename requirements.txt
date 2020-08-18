@@ -1,0 +1,11 @@
+pylint
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+requests
+tabulate
+tqdm
+discord
+youtube_dl
+ffmpeg
+PyDrive
