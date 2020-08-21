@@ -47,8 +47,7 @@ else:
 
 g_login.SaveCredentialsFile('configs\mycreds.txt')
 drive = GoogleDrive(g_login)
-folder_id = ['1eAnQD9mV0xhqaMVoeSGA06NrU1R6ik7Y']
-channel_ids = ['UC5CwaMl1eIgY8h02uZw7u8A','UCl_gCybOJRIgOXw6Qb4qJzQ']
+folder_id = '1eAnQD9mV0xhqaMVoeSGA06NrU1R6ik7Y'
 
 #====polling loop for youtube; update manually for now.====
 def poll_loop(channel_id):
@@ -116,7 +115,7 @@ def my_hook(d):
         return d['filename']
 
 ydl_opts_archive = {
-    'format': 'bestaudio/best[height<=480]',
+    'format': 'bestaudio',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
@@ -175,19 +174,8 @@ def get_gdrive_service():
 
 service = get_gdrive_service()
 
-def make_folder():
-    folder_metadata = {
-        "name": "Karaoke Archive",
-        "mimeType": "application/vnd.google-apps.folder"
-    }
-    folder = service.files().create(body=folder_metadata, fields='id').execute()
-    print('Folder creation success!')
-    print('Folder ID:', folder.get('id'))
-    return folder.get('id')
-
 #filename = title, source = path, folder_id given; id of karaoke archive
 def up(filename, dest_folder_id=folder_id):
-    service = get_gdrive_service()
     file_metadata = {
         'name': filename,
         'parents': [dest_folder_id],
@@ -254,16 +242,18 @@ def download_audio(video_id):
     fixed_fname = new_file.split('.')[0]+'.mp3'
     return fixed_fname
 
-# def test_archive(x):
-#     new_file = dl_audio(x)
-#     fixed_fname = new_file.split('.')[0]+'.mp3'
-#     file_id = up(fixed_fname)
-#     print(file_id)
-#     os.remove(fixed_fname)
-#     print('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id))
+def test_archive(x):
+    new_file = dl_audio(x)
+    fixed_fname = new_file.split('.')[0]+'.mp3'
+    file_id = up(fixed_fname)
+    print(file_id)
+    os.remove(fixed_fname)
+    print('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id))
 
 # def test_download(x):
 #     new_file = dl_on_demand(video_id)
 #     fixed_fname = new_file.split('.')[0]+'.mp3'
 #     return fixed_fname
 # test_function('https://www.youtube.com/watch?v=5yDNEmcKQFY')
+
+test_archive('https://www.youtube.com/watch?v=3iPU-wuB-CE')
