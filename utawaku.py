@@ -155,21 +155,22 @@ def get_gdrive_service():
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-                'client_secrets.json', scopes)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+    # if os.path.exists('token.pickle'):
+    #     with open('token.pickle', 'rb') as token:
+    #         creds = pickle.load(token)
+    # # If there are no (valid) credentials available, let the user log in.
+    # if not creds or not creds.valid:
+    #     if creds and creds.expired and creds.refresh_token:
+    #         creds.refresh(Request())
+    #     else:
+    #         flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+    #             'configs/client_secrets.json', scopes)
+    #         creds = flow.run_local_server(port=0)
+    #     # Save the credentials for the next run
+    #     with open('token.pickle', 'wb') as token:
+    #         pickle.dump(creds, token)
     # return Google Drive API service
+    creds = ServiceAccountCredentials.from_json_keyfile_name("configs/client_secrets.json", scopes)
     return googleapiclient.discovery.build('drive', 'v3', credentials=creds)
 
 service = get_gdrive_service()
@@ -246,7 +247,7 @@ def archive_audio(channel_id):
             os.remove(fixed_fname)
             print('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id.get('id')))
         else:
-            time.sleep(300 - time.time() % 300)
+            time.sleep(900 - time.time() % 900)
 
 def download_audio(video_id):
     new_file = dl_on_demand(video_id)

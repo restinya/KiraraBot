@@ -5,3 +5,7 @@ configs/client_secrets.json
 **/__pycache__
 token.pickle
 **/venv
+ffmpeg.exe
+ffplay.exe
+ffprobe.exe
+youtube-dl.exe
