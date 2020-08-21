@@ -6,7 +6,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install dependencies
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-RUN sudo apt install ffmeg
+RUN sudo apt install ffmpeg
 #ship it
 ADD main.py /
 CMD [ "python", "./main.py"]

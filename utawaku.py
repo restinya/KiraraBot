@@ -58,7 +58,7 @@ def poll_loop(channel_id):
 
     api_service_name = "youtube"
     api_version = "v3"
-    client_secrets_file = "configs/client_secrets.json"
+    client_secrets_file = "configs\client_secrets.json"
 
     # Get credentials and create an API client
     credentials = ServiceAccountCredentials.from_json_keyfile_name(client_secrets_file, scopes)
