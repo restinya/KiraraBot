@@ -191,37 +191,37 @@ def get_gdrive_service():
 service = get_gdrive_service()
 
 #filename = title, source = path, folder_id given; id of karaoke archive
-def up_small(filename, mimeType, dest_folder_id=folder_id):
-    file_metadata = {
-        'name': filename,
-        'parents': [dest_folder_id],
-        'mimeType': mimeType
-    }
-    media = MediaFileUpload(
-        filename,
-        mimetype=mimeType
-    )
-    user_permission = {
-    'type': 'anyone',
-    'role': 'reader',
-}
+# def up_small(filename, mimeType, dest_folder_id=folder_id):
+#     file_metadata = {
+#         'name': filename,
+#         'parents': [dest_folder_id],
+#         'mimeType': mimeType
+#     }
+#     media = MediaFileUpload(
+#         filename,
+#         mimetype=mimeType
+#     )
+#     user_permission = {
+#     'type': 'anyone',
+#     'role': 'reader',
+# }
 
-    if check_file(filename) is False:
-        file = service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields='id').execute()
-        file_id = file.get('id')
-        print('Uploaded!')
-        print('File ID:', file_id)
-        service.permissions().create(
-            fileId=file_id,
-            body=user_permission,
-            fields='id',
-        ).execute()
-        return file_id
-    else:
-        print('File already exists as', filename)
+#     if check_file(filename) is False:
+#         file = service.files().create(
+#             body=file_metadata,
+#             media_body=media,
+#             fields='id').execute()
+#         file_id = file.get('id')
+#         print('Uploaded!')
+#         print('File ID:', file_id)
+#         service.permissions().create(
+#             fileId=file_id,
+#             body=user_permission,
+#             fields='id',
+#         ).execute()
+#         return file_id
+#     else:
+#         print('File already exists as', filename)
 
 def up_large(filename, mimeType, dest_folder_id=folder_id):
     file_metadata = {
@@ -241,7 +241,7 @@ def up_large(filename, mimeType, dest_folder_id=folder_id):
 }
 
     if check_file(filename) is False:
-        file = service.files().create(
+        uploaded_file = service.files().create(
             body=file_metadata,
             media_body=media,
             fields='id').execute()
@@ -250,7 +250,7 @@ def up_large(filename, mimeType, dest_folder_id=folder_id):
         #     status, response = file.next_chunk()
         #     if status:
         #         print("Uploaded %d%%." % int(status.progress() * 100))
-        file_id = file.get('id')
+        file_id = uploaded_file.get('id')
         print('Uploaded!')
         print('File ID:', file_id)
         service.permissions().create(
@@ -283,15 +283,15 @@ def youtube_loop(channel_id):
 def archive_audio(channel_id):
     new_file = dl_audio(channel_id)
     fixed_fname = new_file.split('.')[0]+'.mp3'
-    file_id = up_small(fixed_fname, 'audio/mpeg')
-    os.remove(fixed_fname)
-    return file_id
+    file_id = up_large(fixed_fname, 'audio/mpeg')
+    #os.remove(fixed_fname)
+    return fixed_fname, file_id
 
 def archive_video(video_id):
     new_file = dl_video(video_id)
     file_id = up_large(new_file, 'video/mp4')
-    os.remove(new_file)
-    return file_id
+    #os.remove(new_file)
+    return new_file, file_id
 
 def download_audio(video_id):
     new_file = dl_on_demand(video_id)
@@ -303,10 +303,10 @@ def archive_loop(channel_id):
         if youtube_loop(channel_id):
             if live_3d == False:
                 file_id = archive_audio(channel_id)
-                print('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id.get('id')))
+                print('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id))
             elif live_3d == True:
                 file_id = archive_video(channel_id)
-                print('Uploaded to {url}'.format(url='https://drive.google.com/open?id=' + file_id.get('id')))
+                print('Uploaded to {url}'.format(url='https://drive.google.com/open?id=' + file_id))
                 live_3d = False
         else:
             time.sleep(900 - time.time() % 900)

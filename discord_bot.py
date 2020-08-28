@@ -12,50 +12,53 @@ import random
 # 	discord.opus.load_opus('opus')
 
 coggers = ['download', 'archive', 'kmb'] #modules
+def launch_kirara():
+    def loadtoken():
+        # load globals defined in the config file
 
-def loadtoken():
-    # load globals defined in the config file
+        global bot_token
 
-    global bot_token
-
-    try:
-        with open('configs/token.json') as f:
-            print('loading token file for main bot')
-            data = json.load(f)
-            bot_token = data['token']
-            return True
-    except:
-        bot_token = os.environ.get('bot_token')
-        return True
-
-if not loadtoken():
-    exit()
-
-kirara = commands.Bot(command_prefix='k.') #bot command
-
-#load our coggers
-def kirara_online():
-    for load in coggers:
         try:
-            kirara.load_extension('coggers.'+(load))
-        except Exception as e:
-            print('{} cannot be loaded. [{}]'.format(load, e))
+            with open('configs/token.json') as f:
+                print('loading token file for main bot')
+                data = json.load(f)
+                bot_token = data['token']
+                return True
+        except:
+            bot_token = os.environ.get('bot_token')
+            return True
+
+    if not loadtoken():
+        exit()
+
+    kirara = commands.Bot(command_prefix='k.') #bot command
+
+    #load our coggers
+    def kirara_online():
+        for load in coggers:
+            try:
+                kirara.load_extension('coggers.'+(load))
+            except Exception as e:
+                print('{} cannot be loaded. [{}]'.format(load, e))
+
+        @kirara.event
+        async def on_command_error(ctx, error):
+            if isinstance(error, MissingPermissions):
+                await ctx.message.add_reaction(emoji='😔')
+                return
+
+            raise error
+
+    if __name__ == "__main__":
+        kirara_online()
 
     @kirara.event
-    async def on_command_error(ctx, error):
-        if isinstance(error, MissingPermissions):
-            await ctx.message.add_reaction(emoji='😔')
-            return
+    async def on_ready():
+        activity = discord.Activity(name='☄️🥐💫🎪', type=discord.ActivityType.watching)
+        await kirara.change_presence(activity=activity)
+        print('time to slurp')
 
-        raise error
+    kirara.run(bot_token)
 
-if __name__ == "__main__":
-    kirara_online()
 
-@kirara.event
-async def on_ready():
-    activity = discord.Activity(name='☄️🥐💫🎪', type=discord.ActivityType.watching)
-    await kirara.change_presence(activity=activity)
-    print('time to slurp')
-
-kirara.run(bot_token)
+launch_kirara()

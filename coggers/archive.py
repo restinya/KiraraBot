@@ -9,16 +9,17 @@ class ArchiveCog(commands.Cog, name='archive'):
 
     @commands.command()
     async def archive(self, ctx, url, archive_type):
+        try:
             if archive_type == 'video':
-                archive_video(url)
+                file_name, file_id = archive_video(url)
             if archive_type == 'audio':
-                archive_audio(url)
+                file_name, file_id = archive_audio(url)
             channel = ctx.channel
-            try:
-                await channel.send('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id.get('id')))
-            except:
-                await channel.send("There was an error in uploading the file.")
+            await channel.send('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id))
             os.remove(file_name)
+        except:
+            await channel.send('Error in archiving file. Please retry in a few moments.')
+
 
 def setup(bot):
     bot.add_cog(ArchiveCog(bot))
