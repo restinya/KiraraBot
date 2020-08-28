@@ -30,7 +30,7 @@ scopes = ['https://www.googleapis.com/auth/drive.metadata.readonly',
 url = ['https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable']
 id ='suichanwaaaa@karaoke-waaaaai.iam.gserviceaccount.com'
 key = base64.b64decode(open("configs\private_key.json", "r").read())
-
+live_3d = False
 # creds = Credentials.from_json_keyfile_name('client_secrets.json', scopes)
 # service = build('drive', 'v2', credentials=creds)
 
@@ -81,7 +81,10 @@ def poll_loop(channel_id):
     response = request.execute()
     #if "歌" in response['items'][0]['snippet']['title'] or "カラオケ" in response['items'][0]['snippet']['title']:
     #    return False
-    if response['items']:
+
+    if response['items']:    
+        if '3D' in response['items'][0]['snippet']['title']:
+            live_3d = True
         return response['items'][0]['id']['videoId']
     else:
         return False
@@ -115,7 +118,7 @@ def my_hook(d):
         return d['filename']
 
 ydl_opts_archive = {
-    'format': 'bestaudio',
+    'format': 'bestaudio/best[height<=480]',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
@@ -138,6 +141,19 @@ ydl_opts_on_demand = {
     'progress_hooks': [my_hook],
     'nooverwrites': True
 }
+
+ydl_opts_video = {
+    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+    'download_archive': 'configs\Downloaded.txt',
+    'logger': Logger(),
+    'progress_hooks': [my_hook],
+    'nooverwrites': True
+}
+
+def dl_video(url):
+    with youtube_dl.YoutubeDL(ydl_opts_video) as ydl:
+        info = ydl.extract_info(url, download=True)
+        return ydl.prepare_filename(info)
 
 def dl_audio(url):
     with youtube_dl.YoutubeDL(ydl_opts_archive) as ydl:
@@ -175,15 +191,15 @@ def get_gdrive_service():
 service = get_gdrive_service()
 
 #filename = title, source = path, folder_id given; id of karaoke archive
-def up(filename, dest_folder_id=folder_id):
+def up_small(filename, mimeType, dest_folder_id=folder_id):
     file_metadata = {
         'name': filename,
         'parents': [dest_folder_id],
-        'mimeType': 'audio/mpeg'
+        'mimeType': mimeType
     }
     media = MediaFileUpload(
         filename,
-        mimetype='audio/mpeg'
+        mimetype=mimeType
     )
     user_permission = {
     'type': 'anyone',
@@ -207,7 +223,44 @@ def up(filename, dest_folder_id=folder_id):
     else:
         print('File already exists as', filename)
 
+def up_large(filename, mimeType, dest_folder_id=folder_id):
+    file_metadata = {
+        'name': filename,
+        'parents': [dest_folder_id],
+        'mimeType': mimeType
+    }
+    media = MediaFileUpload(
+        filename,
+        chunksize=1024 * 1024,
+        mimetype=mimeType,
+        resumable=True
+    )
+    user_permission = {
+    'type': 'anyone',
+    'role': 'reader',
+}
 
+    if check_file(filename) is False:
+        file = service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields='id').execute()
+        # response = None
+        # while response is None:
+        #     status, response = file.next_chunk()
+        #     if status:
+        #         print("Uploaded %d%%." % int(status.progress() * 100))
+        file_id = file.get('id')
+        print('Uploaded!')
+        print('File ID:', file_id)
+        service.permissions().create(
+            fileId=file_id,
+            body=user_permission,
+            fields='id',
+        ).execute()
+        return file_id
+    else:
+        print('File already exists as', filename)
 
 #couldnt find one for files... check to see if folder check works for files
 def check_file(filename):
@@ -226,34 +279,34 @@ def youtube_loop(channel_id):
         else:
             return False
 
+#TODO: implement a proper file check for dupes.
 def archive_audio(channel_id):
-    while True:
-        if youtube_loop(channel_id):
-            new_file = dl_audio(channel_id)
-            fixed_fname = new_file.split('.')[0]+'.mp3'
-            file_id = up(fixed_fname)
-            os.remove(fixed_fname)
-            print('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id.get('id')))
-        else:
-            time.sleep(900 - time.time() % 900)
+    new_file = dl_audio(channel_id)
+    fixed_fname = new_file.split('.')[0]+'.mp3'
+    file_id = up_small(fixed_fname, 'audio/mpeg')
+    os.remove(fixed_fname)
+    return file_id
+
+def archive_video(video_id):
+    new_file = dl_video(video_id)
+    file_id = up_large(new_file, 'video/mp4')
+    os.remove(new_file)
+    return file_id
 
 def download_audio(video_id):
     new_file = dl_on_demand(video_id)
     fixed_fname = new_file.split('.')[0]+'.mp3'
     return fixed_fname
 
-def test_archive(x):
-    new_file = dl_audio(x)
-    fixed_fname = new_file.split('.')[0]+'.mp3'
-    file_id = up(fixed_fname)
-    print(file_id)
-    os.remove(fixed_fname)
-    print('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id))
-
-# def test_download(x):
-#     new_file = dl_on_demand(video_id)
-#     fixed_fname = new_file.split('.')[0]+'.mp3'
-#     return fixed_fname
-# test_function('https://www.youtube.com/watch?v=5yDNEmcKQFY')
-
-test_archive('https://www.youtube.com/watch?v=3iPU-wuB-CE')
+def archive_loop(channel_id):
+    while True:
+        if youtube_loop(channel_id):
+            if live_3d == False:
+                file_id = archive_audio(channel_id)
+                print('Uploaded file to {url}'.format(url='https://drive.google.com/open?id=' + file_id.get('id')))
+            elif live_3d == True:
+                file_id = archive_video(channel_id)
+                print('Uploaded to {url}'.format(url='https://drive.google.com/open?id=' + file_id.get('id')))
+                live_3d = False
+        else:
+            time.sleep(900 - time.time() % 900)

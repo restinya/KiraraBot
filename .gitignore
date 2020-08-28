@@ -1,7 +1,4 @@
-configs/token.json
-configs/private_key.json
-configs/mycreds.txt
-configs/client_secrets.json
+configs/*
 **/__pycache__
 token.pickle
 **/venv

@@ -11,7 +11,7 @@ import random
 # 	# If still you get issues here, replace 'opus' with the directory location of 'opus' in the line below.
 # 	discord.opus.load_opus('opus')
 
-coggers = ['download', 'kmb'] #modules
+coggers = ['download', 'archive', 'kmb'] #modules
 
 def loadtoken():
     # load globals defined in the config file
